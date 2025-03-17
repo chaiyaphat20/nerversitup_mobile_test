@@ -13,11 +13,11 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppNavigator = () => {
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator initialRouteName="DepartmentList">
+      <Stack.Navigator initialRouteName="DepartmentList" >
         <Stack.Screen
           name="DepartmentList"
           component={DepartmentScreen}
-          options={{ title: 'Departments' }}
+          options={{ title: '' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
