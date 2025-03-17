@@ -1,0 +1,11 @@
+{
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
+    "typescript.format.insertSpaceBeforeFunctionParenthesis": true,
+    "prettier.semi": false,
+    "editor.formatOnSave": true,
+    "cSpell.words": [
+        "usecase"
+    ]
+}
