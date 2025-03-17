@@ -9,12 +9,12 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AppModule } from '../../di/AppModule';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { Department } from '../../model/Department';
 import { Product } from '../../model/product';
+import ProductModal from '../components/department/modal/ProductModal';
 
 type ListScreenNavigationProp = StackNavigationProp<RootStackParamList, 'DepartmentList'>;
 
@@ -27,6 +27,7 @@ const DepartmentScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectDepartment,setSelectDepartment] = useState<Department|null>(null)
+  const [selectProduct,setSelectProduct] = useState<Product|null>(null)
 
   const getDepartmentUseCase = AppModule.provideGetDepartmentsUseCase();
   const getProductUseCase = AppModule.provideGetProductUseCase();
@@ -99,10 +100,12 @@ const DepartmentScreen = () => {
     </TouchableOpacity>
   );
 
-  const renderDepartmentDetail= ({item}: { item: Product }) => (
+  const renderProductDetail= ({item}: { item: Product }) => (
     <TouchableOpacity
     style={[styles.productCard,{width:itemWidth}]}
-      onPress={() => console.log(`เลือก ${item.id}`)}
+      onPress={() => {
+        setSelectProduct(item)
+      }}
     >
       <Image source={{ uri: 'https://picsum.photos/200'  }} style={styles.productCardImage}  onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}/>
       {/* <Image source={{ uri: item.imageUrl }} style={styles.productCardImage}  onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}/> */}
@@ -139,13 +142,16 @@ const DepartmentScreen = () => {
       <Text  style={{fontWeight:700}}>Product listing : {selectDepartment.name}</Text>
       <FlatList
         data={products}
-        renderItem={renderDepartmentDetail}
+        renderItem={renderProductDetail}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={true}
         numColumns={2}  // กำหนดให้แสดง 2 คอลัมน์
         contentContainerStyle={{width:'100%'}}
         />
       </View>}
+      <ProductModal modalVisible={!!selectProduct} product={selectProduct} closeModal={()=>{
+        setSelectProduct(null)
+      }}/>
     </View>
   );
 };
