@@ -1,6 +1,7 @@
 import { DepartmentApi } from "../data/remote/api/DepartmentApi";
 import { DepartmentRepositoryImpl } from "../data/repository/DepartmentRepositoryImpl";
 import { GetDepartment } from "../domain/usecase/GetDepartments";
+import { GetProducts } from "../domain/usecase/GetProducts";
 
 export class DepartmentModule {
   static provideDepartmentApi(): DepartmentApi {
@@ -17,4 +18,9 @@ export class DepartmentModule {
     return new GetDepartment(departmentRepository);
   }
   
+
+  static provideProductUseCase(): GetProducts {
+    const departmentRepository = this.provideDepartmentRepository();
+    return new GetProducts(departmentRepository);
+  }
 }
