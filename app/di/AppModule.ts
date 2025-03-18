@@ -2,7 +2,7 @@ import { GetDepartment } from "../domain/usecase/GetDepartments";
 import { GetProducts } from "../domain/usecase/GetProducts";
 import { DepartmentModule } from "./DepartmentModule";
 
-export class AppModule {
+export default class AppModule {
   static provideGetDepartmentsUseCase(): GetDepartment {
     return DepartmentModule.provideGetDepartmentUseCase();
   }

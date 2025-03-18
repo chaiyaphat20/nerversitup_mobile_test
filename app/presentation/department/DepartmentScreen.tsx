@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,64 +9,33 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { AppModule } from '../../di/AppModule';
-import { RootStackParamList } from '../navigation/AppNavigator';
 import { Department } from '../../model/Department';
 import { Product } from '../../model/product';
 import ProductModal from '../components/department/modal/ProductModal';
-
-type ListScreenNavigationProp = StackNavigationProp<RootStackParamList, 'DepartmentList'>;
+import { useDepartments } from '../hooks/useDepartments';
+import { useProducts } from '../hooks/useProducts';
+import { useProductModal } from '../hooks/useProductModal';
 
 const { width } = Dimensions.get('window');
-const itemWidth = width / 2 - 12 // ลบด้วยค่า padding/margin
+const itemWidth = width / 2 - 12; // ลบด้วยค่า padding/margin
 
 const DepartmentScreen = () => {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectDepartment,setSelectDepartment] = useState<Department|null>(null)
-  const [selectProduct,setSelectProduct] = useState<Product|null>(null)
+  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  
+  const { departments, loading: loadingDepartments, error: departmentsError, fetchDepartments } = useDepartments();
+  const { products, loading: loadingProducts, error: productsError, fetchProducts } = useProducts();
+  const { selectedProduct, openModal, closeModal, isModalOpen } = useProductModal();
 
-  const getDepartmentUseCase = AppModule.provideGetDepartmentsUseCase();
-  const getProductUseCase = AppModule.provideGetProductUseCase();
+  const loading = loadingDepartments || loadingProducts;
+  const error = departmentsError || productsError;
+  console.log({departmentsError})
 
-  useEffect(() => {
-    fetchDepartment();
-  }, []);
-
-  const fetchDepartment = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await getDepartmentUseCase.execute();
-      setDepartments(result);
-    } catch (err) {
-      setError('Failed to load departments. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleDepartmentPress = (department: Department) => {
+    setSelectedDepartment(department);
+    fetchProducts(department.id);
   };
 
-  const fetchProduct = async (departmentId:string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await getProductUseCase.execute(departmentId);
-      setProducts(result);
-    } catch (err) {
-      setError('Failed to load departments. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDepartmentPress = (departmentId: string) => {
-    fetchProduct(departmentId)
-  };
-
-  if (loading) {
+  if (loading && departments.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0066cc" />
@@ -78,57 +47,59 @@ const DepartmentScreen = () => {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorMessage}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchDepartment}>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchDepartments}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-
-  const renderDepartmentItem = ({item}: { item: Department }) => (
+  const renderDepartmentItem = ({ item }: { item: Department }) => (
     <TouchableOpacity
       style={styles.departmentCard}
-      onPress={() => {
-        setSelectDepartment(item)
-        handleDepartmentPress(item.id)
-      }}
+      onPress={() => handleDepartmentPress(item)}
     >
       <Text style={styles.departmentTitle}>{item.name}</Text>
-      {/* <Image source={{ uri: item.imageUrl }} style={styles.departmentImage}  onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}/> */}
-      <Image source={{ uri: 'https://picsum.photos/400' }} style={styles.departmentImage}  onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}/>
+      {/* <Image source={{ uri: item.imageUrl }} style={styles.departmentImage} onError={(error) => console.error('Image loading error:', error.nativeEvent.error)} /> */}
+      <Image 
+        source={{ uri: 'https://picsum.photos/400' }} 
+        style={styles.departmentImage} 
+        onError={(error) => console.error('Image loading error:', error.nativeEvent.error)} 
+      />
     </TouchableOpacity>
   );
 
-  const renderProductDetail= ({item}: { item: Product }) => (
+  const renderProductDetail = ({ item }: { item: Product }) => (
     <TouchableOpacity
-    style={[styles.productCard,{width:itemWidth}]}
-      onPress={() => {
-        setSelectProduct(item)
-      }}
+      style={[styles.productCard, { width: itemWidth }]}
+      onPress={() => openModal(item)}
     >
-      <Image source={{ uri: 'https://picsum.photos/200'  }} style={styles.productCardImage}  onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}/>
-      {/* <Image source={{ uri: item.imageUrl }} style={styles.productCardImage}  onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}/> */}
-      <View style={{width:'100%',height:1,backgroundColor:'gray'}}/>
-      <View style={{padding:5,gap:10,position:'relative',justifyContent:'space-between',flex:1}}>
-      <View>
-        <Text>{item.name}</Text>
-          <Text 
-          numberOfLines={2} 
-          ellipsizeMode="tail"
-        >
-          {item.desc}
-        </Text>
-       </View>
-        <Text style={{alignSelf:'flex-end'}}>Prices: {item.price}฿</Text>
+      <Image 
+        source={{ uri: 'https://picsum.photos/200' }} 
+        style={styles.productCardImage} 
+        onError={(error) => console.error('Image loading error:', error.nativeEvent.error)} 
+      />
+      {/* <Image source={{ uri: item.imageUrl }} style={styles.productCardImage} onError={(error) => console.error('Image loading error:', error.nativeEvent.error)} /> */}
+      <View style={{ width: '100%', height: 1, backgroundColor: 'gray' }} />
+      <View style={{ padding: 5, gap: 10, position: 'relative', justifyContent: 'space-between', flex: 1 }}>
+        <View>
+          <Text>{item.name}</Text>
+          <Text
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {item.desc}
+          </Text>
+        </View>
+        <Text style={{ alignSelf: 'flex-end' }}>Prices: {item.price} ฿</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.screenContainer}>
-      <View style={{gap:10}}>
-        <Text style={{fontWeight:700}}>Department carousel</Text>
+      <View style={{ gap: 10 }}>
+        <Text style={{ fontWeight: '700' }}>Department carousel</Text>
         <FlatList
           data={departments}
           renderItem={renderDepartmentItem}
@@ -138,33 +109,45 @@ const DepartmentScreen = () => {
           contentContainerStyle={styles.carouselContainer}
         />
       </View>
-      {selectDepartment && <View  style={{gap:10}}>
-      <Text  style={{fontWeight:700}}>Product listing : {selectDepartment.name}</Text>
-      <FlatList
-        data={products}
-        renderItem={renderProductDetail}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={true}
-        numColumns={2}
-        contentContainerStyle={{width:'100%'}}
-        />
-      </View>}
-      <ProductModal modalVisible={!!selectProduct} product={selectProduct} closeModal={()=>{
-        setSelectProduct(null)
-      }}/>
+
+      {loadingProducts && (
+        <View style={styles.productLoadingContainer}>
+          <ActivityIndicator size="small" color="#0066cc" id='loading-indicator'/>
+        </View>
+      )}
+
+      {selectedDepartment && !loadingProducts && (
+        <View style={{ gap: 10 }}>
+          <Text style={{ fontWeight: '700' }}>Product listing: {selectedDepartment.name}</Text>
+          <FlatList
+            data={products}
+            renderItem={renderProductDetail}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={true}
+            numColumns={2}
+            contentContainerStyle={{ width: '100%' }}
+          />
+        </View>
+      )}
+
+      <ProductModal 
+        modalVisible={isModalOpen} 
+        product={selectedProduct} 
+        closeModal={closeModal} 
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  productCard:{
-    flex:1,
-    height:250,
-    borderRadius:8,
-    borderWidth:1,
-    margin:4,
+  productCard: {
+    flex: 1,
+    height: 250,
+    borderRadius: 8,
+    borderWidth: 1,
+    margin: 4,
     overflow: 'hidden',
-    borderColor:"gray"
+    borderColor: "gray"
   },
   productCardImage: {
     width: '100%',
@@ -175,6 +158,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  productLoadingContainer: {
+    padding: 20,
+    alignItems: 'center',
   },
   errorContainer: {
     flex: 1,
@@ -198,21 +185,19 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  
   screenContainer: {
     flex: 1,
-    gap:20,
-    padding:10
+    gap: 20,
+    padding: 10
   },
-  
   carouselContainer: {
     paddingHorizontal: 10,
   },
   departmentCard: {
-    position:'relative',
+    position: 'relative',
     backgroundColor: 'white',
     marginHorizontal: 5,
-    marginVertical:5,
+    marginVertical: 5,
     borderRadius: 8,
     width: 150,
     height: 150,
@@ -236,12 +221,12 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   departmentTitle: {
-    position:'absolute',
-    top:10,
-    right:10,
+    position: 'absolute',
+    top: 10,
+    right: 10,
     fontSize: 14,
     textAlign: 'center',
-    zIndex:10
+    zIndex: 10
   },
 });
 

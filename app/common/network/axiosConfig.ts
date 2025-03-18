@@ -1,7 +1,6 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { env } from '../../config/config';
 
-console.log({url:env.BASE_URL})
 const apiClient: AxiosInstance = axios.create({
   baseURL: env.BASE_URL,
   timeout: 10000,
