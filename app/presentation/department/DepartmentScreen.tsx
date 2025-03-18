@@ -145,7 +145,7 @@ const DepartmentScreen = () => {
         renderItem={renderProductDetail}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={true}
-        numColumns={2}  // กำหนดให้แสดง 2 คอลัมน์
+        numColumns={2}
         contentContainerStyle={{width:'100%'}}
         />
       </View>}
